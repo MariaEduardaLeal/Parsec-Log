@@ -1,0 +1,26 @@
+name: Deploy Parsec Log
+
+# Avisa o GitHub para rodar isso sempre que houver um push ou merge nessa branch
+on:
+  push:
+    branches:
+      - develop_eduarda
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conectar na VPS e Atualizar
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/parsec-log
+            git pull origin develop_eduarda
+
+            # Comandos do Laravel para atualizar e limpar o cache
+            ./vendor/bin/sail composer install --no-interaction --prefer-dist --optimize-autoloader
+            ./vendor/bin/sail artisan migrate --force
+            ./vendor/bin/sail artisan optimize:clear
